@@ -2,16 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -20,17 +23,24 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include',
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.message || 'ログインに失敗しました')
+        throw new Error(data.message || 'ログインに失敗しました')
       }
 
-      router.push('/')
-      router.refresh()
+      // ログイン成功時の処理
+      console.log('ログイン成功:', data)
+      
+      // 強制的にページをリロードしてダッシュボードに遷移
+      window.location.assign('/')
     } catch (err) {
+      console.error('ログインエラー:', err)
       setError(err instanceof Error ? err.message : 'ログインに失敗しました')
+      setIsLoading(false)
     }
   }
 
@@ -65,6 +75,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="メールアドレス"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -80,6 +91,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="パスワード"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -87,10 +99,22 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              disabled={isLoading}
             >
-              ログイン
+              {isLoading ? 'ログイン中...' : 'ログイン'}
             </button>
+          </div>
+
+          <div className="text-sm text-center">
+            <Link
+              href="/signup"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              新規アカウント作成はこちら
+            </Link>
           </div>
         </form>
       </div>

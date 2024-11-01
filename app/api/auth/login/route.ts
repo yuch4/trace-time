@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
 import { pool } from '@/lib/db'
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+import { SignJWT } from 'jose'
 
 export async function POST(request: Request) {
   try {
@@ -35,19 +33,28 @@ export async function POST(request: Request) {
     }
 
     // JWTトークンの生成
-    const token = jwt.sign(
-      { 
-        userId: user.id,
-        email: user.email,
-        name: user.name
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    )
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+    const token = await new SignJWT({ 
+      userId: user.id,
+      email: user.email,
+      name: user.name
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(secret)
 
     // レスポンスの作成
     const response = NextResponse.json(
-      { message: 'ログイン成功' },
+      { 
+        success: true,
+        message: 'ログインに成功しました',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email
+        }
+      },
       { status: 200 }
     )
 
@@ -55,7 +62,8 @@ export async function POST(request: Request) {
     response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
+      path: '/',
       maxAge: 86400 // 24時間
     })
 
@@ -63,7 +71,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { message: 'ログイン処理に失敗しました' },
+      { 
+        success: false,
+        message: 'ログイン処理に失敗しました'
+      },
       { status: 500 }
     )
   }

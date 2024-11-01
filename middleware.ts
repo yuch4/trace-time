@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import jwt from 'jsonwebtoken'
+import { jwtVerify } from 'jose'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-
-export function middleware(request: NextRequest) {
-  // ログインページはスキップ
-  if (request.nextUrl.pathname === '/login') {
+export async function middleware(request: NextRequest) {
+  // ログインページとサインアップページはスキップ
+  if (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') {
     return NextResponse.next()
   }
 
@@ -18,24 +16,19 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    // トークンの検証
-    jwt.verify(token.value, JWT_SECRET)
+    // JWTの検証
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+    await jwtVerify(token.value, secret)
     return NextResponse.next()
   } catch (error) {
     // トークンが無効な場合はログインページにリダイレクト
+    console.error('Token verification failed:', error)
     return NextResponse.redirect(new URL('/login', request.url))
   }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (auth API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 } 
