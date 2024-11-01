@@ -25,15 +25,25 @@ type ProjectStats = {
   total_hours: number
 }
 
+type WorkTypeStats = {
+  work_type_name: string
+  total_hours: number
+}
+
 type DashboardData = {
   daily: DailyStats[]
   projects: ProjectStats[]
+  workTypes: WorkTypeStats[]
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
 export function DashboardStats() {
-  const [data, setData] = useState<DashboardData>({ daily: [], projects: [] })
+  const [data, setData] = useState<DashboardData>({ 
+    daily: [], 
+    projects: [],
+    workTypes: []
+  })
 
   useEffect(() => {
     fetch('/api/dashboard/stats')
@@ -42,10 +52,14 @@ export function DashboardStats() {
       .catch(error => console.error('Error fetching dashboard stats:', error))
   }, [])
 
-  // 日付をフォーマット
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     return `${date.getMonth() + 1}/${date.getDate()}`
+  }
+
+  const formatHours = (value: number | string) => {
+    const hours = Number(value)
+    return isNaN(hours) ? '0.0時間' : `${hours.toFixed(1)}時間`
   }
 
   return (
@@ -55,13 +69,13 @@ export function DashboardStats() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-gray-500 text-sm">今月の合計時間</h3>
           <p className="text-2xl font-bold">
-            {data.projects.reduce((sum, p) => sum + Number(p.total_hours), 0).toFixed(1)} 時間
+            {formatHours(data.projects.reduce((sum, p) => sum + p.total_hours, 0))}
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-gray-500 text-sm">今週の合計時間</h3>
           <p className="text-2xl font-bold">
-            {data.daily.reduce((sum, d) => sum + Number(d.total_hours), 0).toFixed(1)} 時間
+            {formatHours(data.daily.reduce((sum, d) => sum + d.total_hours, 0))}
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
@@ -83,7 +97,7 @@ export function DashboardStats() {
                 <YAxis />
                 <Tooltip 
                   labelFormatter={formatDate}
-                  formatter={(value: number) => [`${value.toFixed(1)}時間`]}
+                  formatter={(value) => [formatHours(value)]}
                 />
                 <Legend />
                 <Bar dataKey="total_hours" name="工数" fill="#8884d8" />
@@ -113,10 +127,33 @@ export function DashboardStats() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  formatter={(value: number) => [`${value.toFixed(1)}時間`]}
-                />
+                <Tooltip formatter={(value) => [formatHours(value)]} />
               </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 作業種別別円グラフ */}
+        <div className="bg-white p-6 rounded-lg shadow md:col-span-2">
+          <h3 className="text-lg font-semibold mb-4">作業種別工数分布</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data.workTypes}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="work_type_name" />
+                <YAxis />
+                <Tooltip formatter={(value) => [formatHours(value)]} />
+                <Legend />
+                <Bar 
+                  dataKey="total_hours" 
+                  name="工数" 
+                  fill="#8884d8"
+                  label={{ 
+                    position: 'top',
+                    formatter: (value: number) => `${value.toFixed(1)}h`
+                  }}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
