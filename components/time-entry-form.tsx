@@ -21,16 +21,16 @@ type TimeEntryDetail = {
   description: string
 }
 
-type TimeEntryForm = {
-  date: string
-  details: TimeEntryDetail[]
+type TimeEntryFormProps = {
+  selectedDate: string
+  onDateChange: (date: string) => void
+  onSubmitSuccess?: () => void
 }
 
-export function TimeEntryForm() {
+export function TimeEntryForm({ selectedDate, onDateChange, onSubmitSuccess }: TimeEntryFormProps) {
   const [projects, setProjects] = useState<Project[]>([])
   const [workTypes, setWorkTypes] = useState<WorkType[]>([])
-  const [form, setForm] = useState<TimeEntryForm>({
-    date: new Date().toISOString().split('T')[0],
+  const [form, setForm] = useState<{ details: TimeEntryDetail[] }>({
     details: [
       {
         id: crypto.randomUUID(),
@@ -97,7 +97,7 @@ export function TimeEntryForm() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            date: form.date,
+            date: selectedDate,
             project_id: detail.project_id,
             work_type_id: detail.work_type_id,
             hours: detail.hours,
@@ -109,8 +109,8 @@ export function TimeEntryForm() {
 
       await Promise.all(promises)
 
+      // フォームをリセット
       setForm({
-        date: new Date().toISOString().split('T')[0],
         details: [
           {
             id: crypto.randomUUID(),
@@ -121,6 +121,11 @@ export function TimeEntryForm() {
           }
         ]
       })
+
+      // 保存成功時にコールバックを呼び出し
+      if (onSubmitSuccess) {
+        onSubmitSuccess()
+      }
 
       alert('工数が登録されました')
     } catch (error) {
@@ -138,8 +143,8 @@ export function TimeEntryForm() {
           <label className="block mb-2">日付</label>
           <input
             type="date"
-            value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
+            value={selectedDate}
+            onChange={(e) => onDateChange(e.target.value)}
             className="border p-2 rounded w-full max-w-xs"
             required
           />

@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const result = await pool.query(
       `SELECT * FROM projects
        ${!includeInactive ? 'WHERE is_active = true' : ''}
-       ORDER BY name`
+       ORDER BY project_code`
     )
     return NextResponse.json(result.rows)
   } catch (error) {
@@ -21,13 +21,25 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, is_active } = body
+    const { project_code, name, description, is_active } = body
+
+    const existingProject = await pool.query(
+      'SELECT id FROM projects WHERE project_code = $1',
+      [project_code]
+    )
+
+    if (existingProject.rows.length > 0) {
+      return NextResponse.json(
+        { message: 'このプロジェクトIDは既に使用されています' },
+        { status: 400 }
+      )
+    }
 
     const result = await pool.query(
-      `INSERT INTO projects (name, description, is_active)
-       VALUES ($1, $2, $3)
+      `INSERT INTO projects (project_code, name, description, is_active)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [name, description, is_active]
+      [project_code, name, description, is_active]
     )
 
     return NextResponse.json(result.rows[0])

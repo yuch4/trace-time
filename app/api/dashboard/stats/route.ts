@@ -3,6 +3,18 @@ import { pool } from '@/lib/db'
 
 export async function GET() {
   try {
+    // 今週の月曜日と日曜日を計算
+    const today = new Date()
+    const currentDay = today.getDay()
+    const diff = currentDay === 0 ? 6 : currentDay - 1 // 日曜日の場合は6日前から、それ以外は（現在の曜日-1）日前から
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - diff)
+    monday.setHours(0, 0, 0, 0)
+
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    sunday.setHours(23, 59, 59, 999)
+
     // 日別の合計時間を取得（直近7日間）
     const dailyStats = await pool.query(`
       SELECT 
@@ -13,6 +25,14 @@ export async function GET() {
       GROUP BY date
       ORDER BY date
     `)
+
+    // 今週の合計時間を取得（月曜から日曜）
+    const weeklyStats = await pool.query(`
+      SELECT 
+        ROUND(CAST(SUM(hours) as numeric), 1) as total_hours
+      FROM time_entries
+      WHERE date >= $1 AND date <= $2
+    `, [monday.toISOString(), sunday.toISOString()])
 
     // プロジェクト別の合計時間を取得（今月）
     const projectStats = await pool.query(`
@@ -43,6 +63,11 @@ export async function GET() {
         ...row,
         total_hours: Number(row.total_hours)
       })),
+      weekly: {
+        total_hours: Number(weeklyStats.rows[0]?.total_hours || 0),
+        start_date: monday.toISOString().split('T')[0],
+        end_date: sunday.toISOString().split('T')[0]
+      },
       projects: projectStats.rows.map(row => ({
         ...row,
         total_hours: Number(row.total_hours)

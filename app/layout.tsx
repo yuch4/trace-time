@@ -1,5 +1,12 @@
+import type { Metadata } from 'next'
 import './globals.css'
 import { Sidebar } from '@/components/sidebar'
+import { Header } from '@/components/header'
+
+export const metadata: Metadata = {
+  title: '工数管理システム',
+  description: '工数管理システム',
+}
 
 export default function RootLayout({
   children,
@@ -11,9 +18,12 @@ export default function RootLayout({
       <body>
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 ml-64 p-8 bg-gray-100 min-h-screen">
-            {children}
-          </main>
+          <div className="flex-1 ml-64">
+            <Header />
+            <main className="p-8 bg-gray-100 min-h-screen mt-16">
+              {children}
+            </main>
+          </div>
         </div>
       </body>
     </html>

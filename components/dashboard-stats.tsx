@@ -20,6 +20,12 @@ type DailyStats = {
   total_hours: number
 }
 
+type WeeklyStats = {
+  total_hours: number
+  start_date: string
+  end_date: string
+}
+
 type ProjectStats = {
   project_name: string
   total_hours: number
@@ -32,6 +38,7 @@ type WorkTypeStats = {
 
 type DashboardData = {
   daily: DailyStats[]
+  weekly: WeeklyStats
   projects: ProjectStats[]
   workTypes: WorkTypeStats[]
 }
@@ -41,6 +48,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 export function DashboardStats() {
   const [data, setData] = useState<DashboardData>({ 
     daily: [], 
+    weekly: { total_hours: 0, start_date: '', end_date: '' },
     projects: [],
     workTypes: []
   })
@@ -57,6 +65,15 @@ export function DashboardStats() {
     return `${date.getMonth() + 1}/${date.getDate()}`
   }
 
+  const formatMonthPeriod = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = today.getMonth() + 1
+    const firstDay = new Date(year, today.getMonth(), 1)
+    const lastDay = new Date(year, today.getMonth() + 1, 0)
+    return `(${formatDate(firstDay.toISOString())} 〜 ${formatDate(lastDay.toISOString())})`
+  }
+
   const formatHours = (value: number | string) => {
     const hours = Number(value)
     return isNaN(hours) ? '0.0時間' : `${hours.toFixed(1)}時間`
@@ -67,15 +84,25 @@ export function DashboardStats() {
       {/* 概要カード */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm">今月の合計時間</h3>
+          <h3 className="text-gray-500 text-sm">
+            今月の合計時間
+            <span className="block text-xs">
+              {formatMonthPeriod()}
+            </span>
+          </h3>
           <p className="text-2xl font-bold">
             {formatHours(data.projects.reduce((sum, p) => sum + p.total_hours, 0))}
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm">今週の合計時間</h3>
+          <h3 className="text-gray-500 text-sm">
+            今週の合計時間
+            <span className="block text-xs">
+              ({formatDate(data.weekly.start_date)} 〜 {formatDate(data.weekly.end_date)})
+            </span>
+          </h3>
           <p className="text-2xl font-bold">
-            {formatHours(data.daily.reduce((sum, d) => sum + d.total_hours, 0))}
+            {formatHours(data.weekly.total_hours)}
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
