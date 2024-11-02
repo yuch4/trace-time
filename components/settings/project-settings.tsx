@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline'
 
 type Project = {
@@ -17,11 +17,9 @@ export function ProjectSettings() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    fetchProjects()
-  }, [])
+ 
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       const res = await fetch('/api/projects?include_inactive=true')
       const data = await res.json()
@@ -30,7 +28,11 @@ export function ProjectSettings() {
       console.error('Error fetching projects:', error)
       showMessage('error', 'プロジェクトの取得に失敗しました')
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text })

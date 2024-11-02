@@ -19,7 +19,7 @@ export function UserSettings() {
     fetch('/api/auth/profile')
       .then(res => res.json())
       .then(data => setProfile(data))
-      .catch(error => console.error('Error fetching profile:', error))
+      .catch(() => console.error('Error fetching profile:'))
   }, [])
 
   const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -43,7 +43,7 @@ export function UserSettings() {
       setProfile(updatedProfile)
       setIsEditing(false)
       setMessage('プロフィールを更新しました')
-    } catch (error) {
+    } catch  {
       setMessage('プロフィールの更新に失敗しました')
     }
   }
@@ -73,7 +73,7 @@ export function UserSettings() {
       setIsChangingPassword(false)
       setMessage('パスワードを更新しました')
       form.reset()
-    } catch (error) {
+    } catch {
       setMessage('パスワードの更新に失敗しました')
     }
   }

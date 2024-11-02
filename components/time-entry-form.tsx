@@ -77,7 +77,7 @@ export function TimeEntryForm() {
     }))
   }
 
-  const updateDetail = (id: string, field: keyof TimeEntryDetail, value: any) => {
+  const updateDetail = (id: string, field: keyof TimeEntryDetail, value: string | number) => {
     setForm(prev => ({
       ...prev,
       details: prev.details.map(detail =>

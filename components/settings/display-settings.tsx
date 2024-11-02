@@ -27,8 +27,8 @@ export function DisplaySettings() {
         setSettings(data)
         setIsLoading(false)
       })
-      .catch(error => {
-        console.error('Error fetching display settings:', error)
+      .catch(() => {
+        console.error('Error fetching display settings:')
         setIsLoading(false)
       })
   }, [])
@@ -47,7 +47,7 @@ export function DisplaySettings() {
       if (!res.ok) throw new Error('Failed to save settings')
 
       setMessage('設定を保存しました')
-    } catch (error) {
+    } catch  {
       setMessage('設定の保存に失敗しました')
     }
   }

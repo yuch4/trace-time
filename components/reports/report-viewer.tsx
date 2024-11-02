@@ -30,10 +30,89 @@ type ReportViewerProps = {
   }
 }
 
+// データ型の定義
+interface DailyData {
+    date: string;
+    hours: number;
+    projects?: string;
+    active_members?: number;
+    total_hours?: number;
+    work_type?: string;
+  }
+
+  interface WorkType {
+    work_type: string;
+    total_hours: number;
+  }
+  
+  interface ProjectSummary {
+    project_name: string;
+    total_hours: number;
+    member_count: number;
+    work_types: string;
+  }
+  
+  interface ProjectProgress {
+    date: string;
+    hours: number;
+    project_name: string;
+  }
+  
+  interface TeamMember {
+    member_name: string;
+    total_hours: number;
+  }
+  
+  interface WorkTypeSummary {
+    work_type: string;
+    total_hours: number;
+    user_count: number;
+    projects: string;
+  }
+  
+  // レポートデータの型定義
+  interface ReportData {
+    daily?: DailyData[];
+    workTypes?: WorkType[];
+    summary?: ProjectSummary[] | WorkTypeSummary[];
+    progress?: ProjectProgress[];
+    members?: TeamMember[];
+  }
+
+  // filtersの型を定義
+interface FilterParams extends Record<string, string> {
+    startDate: string;
+    endDate: string;
+    projectId: string;
+    userId: string;
+    workTypeId: string;
+  }
+
+  // データ型の定義を追加
+  // interface DailyDataWithWorkType extends DailyData {
+  //   work_type: string;
+  // }
+
+// interface ChartDataPoint {
+//     value: number;
+//     name: string;
+//   }
+
+// カスタムイベントの型定義を追加
+// interface ChartClickEvent {
+//     name: string;
+//     value: number;
+//     dataKey?: string;
+//     payload?: {
+//       date?: string;
+//       [key: string]: unknown;
+//     };
+//   }
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
 export function ReportViewer({ reportType, filters }: ReportViewerProps) {
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,10 +122,10 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
     setLoading(true)
     setError(null)
 
-    fetch(`/api/reports/${reportType}?` + new URLSearchParams(filters as any))
-      .then(res => res.json())
-      .then(data => {
-        setData(data)
+    fetch(`/api/reports/${reportType}?` + new URLSearchParams(filters as FilterParams))
+    .then(res => res.json())
+      .then((responseData: ReportData) => {
+        setData(responseData)
         setLoading(false)
       })
       .catch(err => {
@@ -59,7 +138,7 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
   const handleExport = async () => {
     try {
       // URLSearchParamsを使用してクエリパラメータを構築
-      const queryParams = new URLSearchParams(filters as any)
+      const queryParams = new URLSearchParams(filters as FilterParams)
       
       // CSVファイルをダウンロード
       const response = await fetch(`/api/reports/export?${queryParams}`)
@@ -132,13 +211,13 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
               <div className="bg-white p-4 rounded-lg shadow">
                 <h4 className="text-sm text-gray-500">合計時間</h4>
                 <p className="text-2xl font-bold">
-                  {formatHours(data.daily?.reduce((sum: number, d: any) => sum + d.hours, 0) || 0)}
+                  {formatHours(data.daily?.reduce((sum: number, d: DailyData) => sum + d.hours, 0) || 0)}
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow">
                 <h4 className="text-sm text-gray-500">プロジェクト数</h4>
                 <p className="text-2xl font-bold">
-                  {new Set(data.daily?.flatMap((d: any) => d.projects?.split(', ') || []) || []).size}
+                  {new Set(data.daily?.flatMap((d: DailyData) => d.projects?.split(', ') || []) || []).size}
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow">
@@ -179,7 +258,7 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
                       outerRadius={100}
                       label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
                     >
-                      {data.workTypes?.map((_: any, index: number) => (
+                      {data.workTypes?.map((_: WorkType, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -194,9 +273,9 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
       case 'project-summary':
         return (
           <div className="space-y-6">
-            {data.summary && (
+            {data.summary && 'project_name' in data.summary[0] && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {data.summary.map((project: any) => (
+                {(data.summary as ProjectSummary[]).map((project) => (
                   <div key={project.project_name} className="bg-white p-4 rounded-lg shadow">
                     <h4 className="text-lg font-semibold">{project.project_name}</h4>
                     <div className="mt-2 space-y-1">
@@ -228,14 +307,14 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
                       formatter={(value: number) => [formatHours(value)]}
                     />
                     <Legend />
-                    {data.progress?.map((p: any) => p.project_name)
+                    {data.progress?.map((p: ProjectProgress) => p.project_name)
                       .filter((name: string, index: number, self: string[]) => self.indexOf(name) === index)
                       .map((project: string, index: number) => (
                         <Line
                           key={project}
                           type="monotone"
                           dataKey="hours"
-                          data={data.progress?.filter((p: any) => p.project_name === project)}
+                          data={data.progress?.filter((p: ProjectProgress) => p.project_name === project)}
                           name={project}
                           stroke={COLORS[index % COLORS.length]}
                         />
@@ -326,7 +405,7 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {data.summary?.map((workType: any) => (
+              {(data.summary as WorkTypeSummary[])?.map((workType) => (
                 <div key={workType.work_type} className="bg-white p-4 rounded-lg shadow">
                   <h4 className="text-lg font-semibold">{workType.work_type}</h4>
                   <div className="mt-2 space-y-1">
@@ -357,14 +436,16 @@ export function ReportViewer({ reportType, filters }: ReportViewerProps) {
                       formatter={(value: number) => [formatHours(value)]}
                     />
                     <Legend />
-                    {data.daily?.map((d: any) => d.work_type)
-                      .filter((type: string, index: number, self: string[]) => self.indexOf(type) === index)
-                      .map((type: string, index: number) => (
+                    {data.daily
+                      ?.map((d: DailyData) => d.work_type)
+                      .filter((type): type is string => type !== undefined)
+                      .filter((type, index, self) => self.indexOf(type) === index)
+                      .map((type, index) => (
                         <Area
                           key={type}
                           type="monotone"
                           dataKey="hours"
-                          data={data.daily?.filter((d: any) => d.work_type === type)}
+                          data={data.daily?.filter((d: DailyData) => d.work_type === type)}
                           name={type}
                           fill={COLORS[index % COLORS.length]}
                           stroke={COLORS[index % COLORS.length]}

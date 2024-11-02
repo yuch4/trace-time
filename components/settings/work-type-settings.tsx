@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+//import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline'
+import { useState, useEffect, useCallback } from 'react'
 
 type WorkType = {
   id: number
@@ -16,12 +17,7 @@ export function WorkTypeSettings() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    fetchWorkTypes()
-  }, [])
-
-  const fetchWorkTypes = async () => {
+  const fetchWorkTypes = useCallback(async () => {
     try {
       const res = await fetch('/api/work-types?include_inactive=true')
       const data = await res.json()
@@ -30,7 +26,14 @@ export function WorkTypeSettings() {
       console.error('Error fetching work types:', error)
       showMessage('error', '作業種別の取得に失敗しました')
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchWorkTypes()
+  }, [fetchWorkTypes])
+
+
+ 
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text })

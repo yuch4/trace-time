@@ -97,7 +97,7 @@ export function DashboardStats() {
                 <YAxis />
                 <Tooltip 
                   labelFormatter={formatDate}
-                  formatter={(value) => [formatHours(value)]}
+                  formatter={(value: number) => [formatHours(value), '工数']}
                 />
                 <Legend />
                 <Bar dataKey="total_hours" name="工数" fill="#8884d8" />
@@ -127,7 +127,7 @@ export function DashboardStats() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [formatHours(value)]} />
+                <Tooltip formatter={(value: number) => [formatHours(value), '工数']} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -142,7 +142,7 @@ export function DashboardStats() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="work_type_name" />
                 <YAxis />
-                <Tooltip formatter={(value) => [formatHours(value)]} />
+                <Tooltip formatter={(value: number) => [formatHours(value), '工数']} />
                 <Legend />
                 <Bar 
                   dataKey="total_hours" 
