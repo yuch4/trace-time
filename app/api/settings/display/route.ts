@@ -32,7 +32,13 @@ export async function GET() {
       })
     }
 
-    return NextResponse.json(result.rows[0])
+    // データベースのカラム名をフロントエンドの期待する形式に変換
+    return NextResponse.json({
+      theme: result.rows[0].theme,
+      dateFormat: result.rows[0].date_format,
+      itemsPerPage: result.rows[0].items_per_page,
+      defaultView: result.rows[0].default_view
+    })
   } catch (error) {
     console.error('Error fetching display settings:', error)
     return NextResponse.json({ error: 'Failed to fetch display settings' }, { status: 500 })
@@ -71,7 +77,13 @@ export async function PUT(request: Request) {
       [payload.userId, theme, dateFormat, itemsPerPage, defaultView]
     )
 
-    return NextResponse.json(result.rows[0])
+    // レスポンスデータをフロントエンドの期待する形式に変換
+    return NextResponse.json({
+      theme: result.rows[0].theme,
+      dateFormat: result.rows[0].date_format,
+      itemsPerPage: result.rows[0].items_per_page,
+      defaultView: result.rows[0].default_view
+    })
   } catch (error) {
     console.error('Error updating display settings:', error)
     return NextResponse.json({ error: 'Failed to update display settings' }, { status: 500 })
