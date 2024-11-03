@@ -16,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <div className="flex">
+        <div className="flex min-h-screen">
           <Sidebar />
           <div className="flex-1 ml-64">
             <Header />

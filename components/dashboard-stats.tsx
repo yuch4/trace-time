@@ -68,7 +68,7 @@ export function DashboardStats() {
   const formatMonthPeriod = () => {
     const today = new Date()
     const year = today.getFullYear()
-    const month = today.getMonth() + 1
+   // const month = today.getMonth() + 1
     const firstDay = new Date(year, today.getMonth(), 1)
     const lastDay = new Date(year, today.getMonth() + 1, 0)
     return `(${formatDate(firstDay.toISOString())} 〜 ${formatDate(lastDay.toISOString())})`
